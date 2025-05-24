@@ -74,7 +74,7 @@ class AddContactDialog(QDialog):
             data[club] = 1 if checkbox.isChecked() else 0
 
         try:
-            conn = sqlite3.connect("clubbot.db")
+            conn = sqlite3.connect("db/clubbot.db")
             cursor = conn.cursor()
             if "rowid" in self.contact_data:
                 set_clause = ", ".join([f"{k} = ?" for k in data])

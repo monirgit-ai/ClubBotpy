@@ -25,12 +25,12 @@ class ReportsTab(QWidget):
         self.load_reports()
 
     def load_reports(self):
-        conn = sqlite3.connect("clubbot.db")
+        conn = sqlite3.connect("db/clubbot.db")
         cursor = conn.cursor()
         cursor.execute('''
             SELECT c.name, r.message, r.status, r.sent_date
             FROM campaign_reports r
-            LEFT JOIN contacts c ON r.contact_id = c.id
+            LEFT JOIN contacts c ON r.contact_id = c.rowid
             ORDER BY r.sent_date DESC
         ''')
         rows = cursor.fetchall()

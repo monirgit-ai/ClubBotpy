@@ -40,7 +40,7 @@ class MessagesTab(QWidget):
             QMessageBox.warning(self, "Input Error", "Both type and content are required.")
             return
 
-        conn = sqlite3.connect("clubbot.db")
+        conn = sqlite3.connect("db/clubbot.db")
         cursor = conn.cursor()
         cursor.execute("INSERT INTO messages (type, content) VALUES (?, ?)", (msg_type, content))
         conn.commit()
@@ -51,7 +51,7 @@ class MessagesTab(QWidget):
         self.message_content_input.clear()
 
     def load_messages(self):
-        conn = sqlite3.connect("clubbot.db")
+        conn = sqlite3.connect("db/clubbot.db")
         cursor = conn.cursor()
         cursor.execute("SELECT type, content FROM messages")
         rows = cursor.fetchall()

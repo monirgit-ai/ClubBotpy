@@ -43,7 +43,7 @@ class CampaignTab(QWidget):
 
     def load_message_options(self):
         self.message_selector.clear()
-        conn = sqlite3.connect("clubbot.db")
+        conn = sqlite3.connect("db/clubbot.db")
         cursor = conn.cursor()
         cursor.execute("SELECT content FROM messages")
         for row in cursor.fetchall():
@@ -52,7 +52,7 @@ class CampaignTab(QWidget):
 
     def load_contact_options(self):
         self.contact_selector.clear()
-        conn = sqlite3.connect("clubbot.db")
+        conn = sqlite3.connect("db/clubbot.db")
         cursor = conn.cursor()
         cursor.execute("SELECT name, whatsapp FROM contacts")
         for row in cursor.fetchall():
@@ -90,7 +90,7 @@ class CampaignTab(QWidget):
 
                 status = 'sent' if response.ok and response.json().get("status") == "sent" else 'failed'
 
-                conn = sqlite3.connect("clubbot.db")
+                conn = sqlite3.connect("db/clubbot.db")
                 cursor = conn.cursor()
                 cursor.execute("SELECT id FROM contacts WHERE whatsapp = ?", (number,))
                 contact = cursor.fetchone()

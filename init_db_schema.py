@@ -1,10 +1,17 @@
 import sqlite3
+import os
 
 def initialize_database():
-    conn = sqlite3.connect("clubbot.db")
-    cursor = conn.cursor()
+    base_dir = os.path.dirname(__file__)
+    db_dir = os.path.join(base_dir, "db")
+    db_path = os.path.join(db_dir, "clubbot.db")
 
-    # Create contacts table (if not already)
+    # ✅ Make sure folder exists
+    os.makedirs(db_dir, exist_ok=True)
+
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    # Contacts table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS contacts (
             name TEXT,
@@ -20,7 +27,28 @@ def initialize_database():
         );
     """)
 
-    # Create groups table
+    # Messages table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            type TEXT NOT NULL,
+            content TEXT NOT NULL
+        );
+    """)
+
+    # Campaign reports
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS campaign_reports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            contact_id INTEGER,
+            message TEXT NOT NULL,
+            status TEXT,
+            sent_date TEXT,
+            FOREIGN KEY(contact_id) REFERENCES contacts(rowid)
+        );
+    """)
+
+    # Groups
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS groups (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -29,7 +57,7 @@ def initialize_database():
         );
     """)
 
-    # Create contact_group_map table
+    # Contact-Group map
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS contact_group_map (
             id INTEGER PRIMARY KEY AUTOINCREMENT,

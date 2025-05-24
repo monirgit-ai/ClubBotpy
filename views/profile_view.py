@@ -41,7 +41,7 @@ class ContactProfileDialog(QDialog):
             self.grid.addWidget(self.info_labels[label], i, 1)
 
     def load_contact(self):
-        conn = sqlite3.connect("clubbot.db")
+        conn = sqlite3.connect("db/clubbot.db")
         cursor = conn.cursor()
         cursor.execute("SELECT name, whatsapp, instagram, birthday, rating, last_club, visit_date, category, recent_visit, club_visits FROM contacts WHERE rowid = ?", (self.rowid,))
         result = cursor.fetchone()
@@ -52,7 +52,7 @@ class ContactProfileDialog(QDialog):
                 self.info_labels[label].setText(str(value) if value is not None else "-")
 
     def open_edit_dialog(self):
-        conn = sqlite3.connect("clubbot.db")
+        conn = sqlite3.connect("db/clubbot.db")
         cursor = conn.cursor()
         cursor.execute("SELECT name, whatsapp, birthday, instagram, rating, last_club, visit_date, category, recent_visit, club_visits FROM contacts WHERE rowid = ?", (self.rowid,))
         result = cursor.fetchone()

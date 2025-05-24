@@ -1,12 +1,15 @@
 import sqlite3
+import csv
+import os
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLineEdit, QPushButton, QHBoxLayout,
     QTableWidget, QTableWidgetItem, QMessageBox, QHeaderView,
-    QAbstractItemView, QLabel, QScrollArea
+    QAbstractItemView, QLabel, QScrollArea, QFileDialog
 )
 from PyQt5.QtCore import Qt
 from views.add_contact_dialog import AddContactDialog
 from views.profile_view import ContactProfileDialog
+from views.group_manager import GroupManagerDialog
 
 class ContactsTab(QWidget):
     def __init__(self):
@@ -24,9 +27,17 @@ class ContactsTab(QWidget):
         search_layout.addWidget(self.search_input)
         self.layout.addLayout(search_layout)
 
+        button_layout = QHBoxLayout()
         add_btn = QPushButton("Add Contact")
         add_btn.clicked.connect(self.open_add_contact_dialog)
-        self.layout.addWidget(add_btn)
+        import_btn = QPushButton("Import CSV")
+        import_btn.clicked.connect(self.import_contacts_from_csv)
+        group_btn = QPushButton("Group")
+        group_btn.clicked.connect(self.open_group_manager)
+        button_layout.addWidget(add_btn)
+        button_layout.addWidget(import_btn)
+        button_layout.addWidget(group_btn)
+        self.layout.addLayout(button_layout)
 
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
@@ -48,9 +59,53 @@ class ContactsTab(QWidget):
         if dialog.exec_() == dialog.Accepted:
             self.load_contacts()
 
+    def open_group_manager(self):
+        try:
+            self.group_dialog = GroupManagerDialog(self)
+            self.group_dialog.exec_()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", str(e))
+
+    def import_contacts_from_csv(self):
+        file_path, _ = QFileDialog.getOpenFileName(self, "Select CSV File", "", "CSV Files (*.csv)")
+        if not file_path:
+            return
+        try:
+            with open(file_path, newline='', encoding='utf-8') as csvfile:
+                reader = csv.DictReader(csvfile)
+                conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), "../db/clubbot.db"))
+                cursor = conn.cursor()
+                count = 0
+                for row in reader:
+                    try:
+                        cursor.execute("""
+                            INSERT INTO contacts (name, whatsapp, birthday, instagram, rating, last_club, visit_date, category, recent_visit, club_visits)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, (
+                            row.get("name"),
+                            row.get("whatsapp"),
+                            row.get("birthday"),
+                            row.get("instagram"),
+                            int(row.get("rating", 0)),
+                            row.get("last_club"),
+                            row.get("visit_date"),
+                            row.get("category"),
+                            row.get("recent_visit"),
+                            int(row.get("club_visits", 0))
+                        ))
+                        count += 1
+                    except sqlite3.IntegrityError:
+                        continue
+                conn.commit()
+                conn.close()
+                QMessageBox.information(self, "Import Complete", f"{count} contacts imported successfully.")
+                self.load_contacts()
+        except Exception as e:
+            QMessageBox.warning(self, "Import Failed", str(e))
+
     def load_contacts(self):
         search_term = self.search_input.text().lower().strip()
-        conn = sqlite3.connect("clubbot.db")
+        conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), "../db/clubbot.db"))
         cursor = conn.cursor()
         cursor.execute("SELECT rowid, name, whatsapp, birthday, rating FROM contacts")
         rows = cursor.fetchall()
@@ -83,7 +138,7 @@ class ContactsTab(QWidget):
             self.contact_table.setCellWidget(row_position, 5, delete_btn)
 
     def handle_cell_click(self, row, column):
-        if column == 0:  # Name column
+        if column == 0:
             item = self.contact_table.item(row, column)
             if item:
                 rowid = item.data(Qt.UserRole)
@@ -94,7 +149,7 @@ class ContactsTab(QWidget):
         confirm = QMessageBox.question(self, "Confirm Delete", "Are you sure you want to delete this contact?",
                                        QMessageBox.Yes | QMessageBox.No)
         if confirm == QMessageBox.Yes:
-            conn = sqlite3.connect("clubbot.db")
+            conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), "../db/clubbot.db"))
             cursor = conn.cursor()
             cursor.execute("DELETE FROM contacts WHERE rowid = ?", (rowid,))
             conn.commit()
@@ -102,7 +157,7 @@ class ContactsTab(QWidget):
             self.load_contacts()
 
     def edit_contact(self, rowid):
-        conn = sqlite3.connect("clubbot.db")
+        conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), "../db/clubbot.db"))
         cursor = conn.cursor()
         cursor.execute("SELECT name, whatsapp, birthday, instagram, rating, last_club, visit_date, category, recent_visit, club_visits FROM contacts WHERE rowid = ?", (rowid,))
         result = cursor.fetchone()
