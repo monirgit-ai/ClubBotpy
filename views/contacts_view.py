@@ -70,38 +70,84 @@ class ContactsTab(QWidget):
         file_path, _ = QFileDialog.getOpenFileName(self, "Select CSV File", "", "CSV Files (*.csv)")
         if not file_path:
             return
+
         try:
             with open(file_path, newline='', encoding='utf-8') as csvfile:
                 reader = csv.DictReader(csvfile)
+
+                def normalize(row):
+                    return {k.lower(): v for k, v in row.items()}
+
+                def clean(val):
+                    return val.strip() if val and val.strip().lower() != "none" else ""
+
+                def safe_int(value):
+                    try:
+                        return int(value)
+                    except (ValueError, TypeError):
+                        return 0
+
                 conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), "../db/clubbot.db"))
                 cursor = conn.cursor()
                 count = 0
+
                 for row in reader:
+                    row = normalize(row)
+
                     try:
                         cursor.execute("""
-                            INSERT INTO contacts (name, whatsapp, birthday, instagram, rating, last_club, visit_date, category, recent_visit, club_visits)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            INSERT INTO contacts (
+                                name, whatsapp, birthday, instagram, rating,
+                                last_club, visit_date, category, recent_visit, club_visits,
+                                mon, tue, wed, thu, fri, sat, sun,
+                                lio, tabu, dear_d, reign, tape, maddox,
+                                dolce, gallery, rex_rooms, selene
+                            )
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                         """, (
-                            row.get("name"),
-                            row.get("whatsapp"),
-                            row.get("birthday"),
-                            row.get("instagram"),
-                            int(row.get("rating", 0)),
-                            row.get("last_club"),
-                            row.get("visit_date"),
-                            row.get("category"),
-                            row.get("recent_visit"),
-                            int(row.get("club_visits", 0))
+                            clean(row.get("name")),
+                            clean(row.get("whatsapp")),
+                            clean(row.get("birthday")),
+                            clean(row.get("instagram")),
+                            safe_int(row.get("rating")),
+                            clean(row.get("last_club")),
+                            clean(row.get("visit_date")),
+                            clean(row.get("category")),
+                            clean(row.get("recent_visit")),
+                            safe_int(row.get("club_visits")),
+                            safe_int(row.get("mon")),
+                            safe_int(row.get("tue")),
+                            safe_int(row.get("wed")),
+                            safe_int(row.get("thu")),
+                            safe_int(row.get("fri")),
+                            safe_int(row.get("sat")),
+                            safe_int(row.get("sun")),
+                            safe_int(row.get("lio")),
+                            safe_int(row.get("tabu")),
+                            safe_int(row.get("dear_d")),
+                            safe_int(row.get("reign")),
+                            safe_int(row.get("tape")),
+                            safe_int(row.get("maddox")),
+                            safe_int(row.get("dolce")),
+                            safe_int(row.get("gallery")),
+                            safe_int(row.get("rex_rooms")),
+                            safe_int(row.get("selene")),
                         ))
                         count += 1
+
                     except sqlite3.IntegrityError:
-                        continue
+                        continue  # Skip duplicates
+                    except Exception as row_error:
+                        print(f"⚠️ Failed to insert row: {row_error}")
+
                 conn.commit()
                 conn.close()
+
                 QMessageBox.information(self, "Import Complete", f"{count} contacts imported successfully.")
                 self.load_contacts()
+
         except Exception as e:
-            QMessageBox.warning(self, "Import Failed", str(e))
+            QMessageBox.warning(self, "Import Failed", f"{str(e)}")
 
     def load_contacts(self):
         search_term = self.search_input.text().lower().strip()

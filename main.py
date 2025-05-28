@@ -6,7 +6,8 @@ from db.db_init import init_db
 # Placeholder imports for views (will be implemented next)
 from views.contacts_view import ContactsTab
 from views.messages_view import MessagesTab
-from views.campaign_view import CampaignTab
+from views.campaign_view import CampaignsTab
+
 from views.reports_view import ReportsTab
 
 class ClubBotApp(QMainWindow):
@@ -23,7 +24,7 @@ class ClubBotApp(QMainWindow):
         tabs = QTabWidget()
         tabs.addTab(ContactsTab(), "Contacts")
         tabs.addTab(MessagesTab(), "Messages")
-        tabs.addTab(CampaignTab(), "Campaigns")
+        tabs.addTab(CampaignsTab(), "Campaign")
         tabs.addTab(ReportsTab(), "Reports")
         self.setCentralWidget(tabs)
 

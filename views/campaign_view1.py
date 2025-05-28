@@ -1,9 +1,6 @@
 import os
 import json
 import sqlite3
-import subprocess
-import threading
-
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QLabel, QComboBox, QTextEdit, QPushButton,
     QLineEdit, QTableWidget, QTableWidgetItem, QCheckBox, QHBoxLayout, QMessageBox, QScrollArea, QFrame
@@ -12,6 +9,10 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from functools import partial
 import requests
+import subprocess
+import threading
+import time
+import sys
 
 class CampaignsTab(QWidget):
     def __init__(self):
@@ -22,7 +23,9 @@ class CampaignsTab(QWidget):
         self.groups = []
         self.messages = []
         self.setup_ui()
-        self.refresh_all()
+        self.load_contacts()
+        self.load_groups()
+        self.load_messages()
 
     def db_connection(self):
         return sqlite3.connect(os.path.join(os.path.dirname(__file__), "../db/clubbot.db"))
@@ -31,20 +34,13 @@ class CampaignsTab(QWidget):
         layout = QVBoxLayout()
 
         # Contact Filter
-        contact_filter_layout = QHBoxLayout()
         self.contact_filter = QComboBox()
         self.contact_filter.addItem("-- No Filter --")
         self.contact_filter.addItem("Upcoming Birthdays")
         self.contact_filter.addItem("Rating 6+ (Artist Night)")
         self.contact_filter.currentIndexChanged.connect(self.filter_contacts)
-        contact_filter_layout.addWidget(QLabel("Contact Filter"))
-        contact_filter_layout.addWidget(self.contact_filter)
-
-        refresh_btn = QPushButton("🔄 Refresh")
-        refresh_btn.clicked.connect(self.refresh_all)
-        contact_filter_layout.addWidget(refresh_btn)
-
-        layout.addLayout(contact_filter_layout)
+        layout.addWidget(QLabel("Contact Filter"))
+        layout.addWidget(self.contact_filter)
 
         # WhatsApp Numbers Display (readonly)
         self.numbers_display = QLineEdit()
@@ -78,39 +74,23 @@ class CampaignsTab(QWidget):
         self.message_list.horizontalHeader().setStretchLastSection(True)
         layout.addWidget(self.message_list)
 
-        # Console Output Area
-        self.console_output = QTextEdit()
-        self.console_output.setReadOnly(True)
-        self.console_output.setStyleSheet("background-color: black; color: lime; font-family: Consolas;")
-        self.console_output.setPlaceholderText("📜 Message logs will appear here...")
-        layout.addWidget(self.console_output)
-
-        # Buttons & Delay Inputs in One Row
-        self.open_btn = QPushButton("Open WhatsApp in Chrome")
+        # Send Button
         self.send_btn = QPushButton("Send WhatsApp Messages")
-        self.send_btn.clicked.connect(self.send_whatsapp_messages)
-        self.open_btn.clicked.connect(self.open_whatsapp_browser)
+        self.send_btn.clicked.connect(self.send_campaign)
+        open_browser_btn = QPushButton("Open WhatsApp in Chrome")
+        open_browser_btn.clicked.connect(self.open_whatsapp_chrome)
+        layout.addWidget(open_browser_btn)
+        layout.addWidget(self.send_btn)
 
-        self.min_delay_input = QLineEdit()
-        self.min_delay_input.setPlaceholderText("Min delay (sec)")
-        self.max_delay_input = QLineEdit()
-        self.max_delay_input.setPlaceholderText("Max delay (sec)")
-
-        bottom_row = QHBoxLayout()
-        bottom_row.addWidget(self.open_btn)
-        bottom_row.addWidget(QLabel("Delay Range:"))
-        bottom_row.addWidget(self.min_delay_input)
-        bottom_row.addWidget(QLabel("to"))
-        bottom_row.addWidget(self.max_delay_input)
-        bottom_row.addWidget(self.send_btn)
-        layout.addLayout(bottom_row)
         self.setLayout(layout)
 
-    def refresh_all(self):
-        self.load_contacts()
-        self.load_groups()
-        self.load_messages()
-        self.filter_contacts()
+    def open_whatsapp_chrome(self):
+        try:
+            script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../flask/app.py"))
+            python_exec = sys.executable  # path to current Python interpreter
+            subprocess.Popen([python_exec, script_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Could not launch app.py: {str(e)}")
 
     def load_contacts(self):
         conn = self.db_connection()
@@ -129,44 +109,28 @@ class CampaignsTab(QWidget):
         conn.close()
 
     def load_messages(self):
-        self.message_type_filter.blockSignals(True)
-        self.message_type_filter.clear()
-        self.message_type_filter.addItem("-- All Types --")
-
         conn = self.db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT id, type, content FROM messages")
         self.messages = cursor.fetchall()
         conn.close()
 
-        types = sorted(set(t for _, t, _ in self.messages))
-        self.message_type_filter.addItems(types)
-
+        self.message_type_filter.addItems(sorted(set([str(t) for _, t, _ in self.messages if t])))
         self.populate_message_list()
-        self.message_type_filter.blockSignals(False)
 
     def populate_message_list(self):
         self.message_list.setRowCount(0)
         selected_type = self.message_type_filter.currentText()
-
-        row_index = 0
-        for mid, mtype, mcontent in self.messages:
+        for i, (mid, mtype, mcontent) in enumerate(self.messages):
             if selected_type != "-- All Types --" and mtype != selected_type:
                 continue
-
+            row_index = self.message_list.rowCount()
             self.message_list.insertRow(row_index)
-
             checkbox = QCheckBox()
             self.message_list.setCellWidget(row_index, 0, checkbox)
-
             preview = mcontent[:50] + ("..." if len(mcontent) > 50 else "")
-            content_item = QTableWidgetItem(f"[{mtype}] {preview}")
-            self.message_list.setItem(row_index, 1, content_item)
-
-            if content_item:
-                content_item.setData(Qt.UserRole, mid)
-
-            row_index += 1
+            self.message_list.setItem(row_index, 1, QTableWidgetItem(f"[{mtype}] {preview}"))
+            self.message_list.item(row_index, 1).setData(Qt.UserRole, mid)
 
     def toggle_all_messages(self, state):
         for row in range(self.message_list.rowCount()):
@@ -176,7 +140,7 @@ class CampaignsTab(QWidget):
 
     def filter_contacts(self):
         selected = self.contact_filter.currentText()
-        from datetime import datetime
+        from datetime import datetime, timedelta
         today = datetime.now()
         filtered = []
 
@@ -211,77 +175,73 @@ class CampaignsTab(QWidget):
         self.numbers_display.setText(", ".join([c[1] for c in filtered]))
 
     def filter_messages(self):
-        try:
-            self.message_type_filter.blockSignals(True)
-            self.populate_message_list()
-            self.select_all_checkbox.setChecked(False)
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Message filtering failed: {str(e)}")
-        finally:
-            self.message_type_filter.blockSignals(False)
+        self.populate_message_list()
+        self.select_all_checkbox.setChecked(False)
+
+    def start_flask_if_needed(self):
+        def _check_and_launch():
+            try:
+                r = requests.get("http://127.0.0.1:5000")
+                if r.status_code == 200:
+                    print("✅ Flask is already running.")
+                    return
+            except:
+                print("🚀 Starting Flask server...")
+                subprocess.Popen(["python", "../flask/app.py"], cwd=os.path.dirname(__file__))
+
+            for _ in range(20):  # wait up to 20 seconds
+                try:
+                    r = requests.get("http://127.0.0.1:5000")
+                    if r.status_code == 200:
+                        print("✅ Flask started successfully.")
+                        return
+                except:
+                    pass
+                time.sleep(1)
+
+            QMessageBox.warning(self, "Timeout", "Failed to connect to Flask after 20 seconds.")
+
+        threading.Thread(target=_check_and_launch).start()
 
     def open_whatsapp_browser(self):
         try:
-            script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../sendswhatsapp.py'))
-            subprocess.Popen(['python', script_path, '--open'])
+            requests.get("http://127.0.0.1:5000/open-browser")
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Could not open WhatsApp: {str(e)}")
+            QMessageBox.critical(self, "Flask Error", f"Could not open browser: {str(e)}")
 
-    def send_whatsapp_messages(self):
-        try:
-            selected_message_ids = []
-            for row in range(self.message_list.rowCount()):
-                checkbox = self.message_list.cellWidget(row, 0)
-                if checkbox and checkbox.isChecked():
-                    item = self.message_list.item(row, 1)
-                    if item:
-                        selected_message_ids.append(item.data(Qt.UserRole))
+    def send_campaign(self):
+        self.start_flask_if_needed()
 
-            if not self.selected_numbers or not selected_message_ids:
-                QMessageBox.warning(self, "Warning", "Please select contacts and messages first.")
-                return
+        # Get selected messages
+        message_ids = [self.message_list.item(r, 1).data(Qt.UserRole)
+                       for r in range(self.message_list.rowCount())
+                       if self.message_list.cellWidget(r, 0).isChecked()]
 
-            conn = self.db_connection()
-            cursor = conn.cursor()
-            qmarks = ",".join("?" * len(selected_message_ids))
-            cursor.execute(f"SELECT content FROM messages WHERE id IN ({qmarks})", selected_message_ids)
-            messages = [row[0] for row in cursor.fetchall()]
-            conn.close()
+        if not self.selected_numbers or not message_ids:
+            QMessageBox.warning(self, "Missing Info", "Please select contacts and messages.")
+            return
 
-            if not messages:
-                QMessageBox.warning(self, "Warning", "No messages found.")
-                return
+        # Use first message (or rotate if random)
+        conn = self.db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT content FROM messages WHERE id IN ({})".format(",".join(["?"] * len(message_ids))),
+                       message_ids)
+        messages = [row[0] for row in cursor.fetchall()]
+        conn.close()
 
-            mode = "Same" if self.send_mode.currentIndex() == 0 else "Random"
+        success_count = 0
+        for idx, number in enumerate(self.selected_numbers):
+            msg = messages[0] if self.send_mode.currentText().startswith("Same") else messages[idx % len(messages)]
 
-            names = [c[1].split()[0] if c[1] else "Friend" for c in self.selected_contacts]
-            temp_data = {
-                "numbers": self.selected_numbers,
-                "names": names,
-                "messages": messages,
-                "mode": mode
-            }
-            temp_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../campaign_data.json'))
-            with open(temp_path, "w", encoding="utf-8") as f:
-                json.dump(temp_data, f, ensure_ascii=False, indent=2)
+            try:
+                r = requests.post("http://127.0.0.1:5000/send-message", json={"number": number, "message": msg},
+                                  timeout=60)
+                if r.status_code == 200:
+                    print(f"✅ Sent to {number}")
+                    success_count += 1
+                else:
+                    print(f"❌ Failed for {number}: {r.text}")
+            except Exception as e:
+                print(f"❌ Error for {number}: {e}")
 
-            def run_sender():
-                try:
-                    script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../sendswhatsapp.py'))
-                    process = subprocess.Popen(
-                        ['python', script_path, '--send'],
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT,
-                        text=True,
-                        encoding='utf-8',
-                        errors='replace'
-                    )
-                    for line in process.stdout:
-                        self.console_output.append(line.strip())
-                except Exception as e:
-                    self.console_output.append(f"❌ Error: {str(e)}")
-
-            threading.Thread(target=run_sender, daemon=True).start()
-
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Could not send messages: {str(e)}")
+        QMessageBox.information(self, "Done", f"{success_count} messages sent.")

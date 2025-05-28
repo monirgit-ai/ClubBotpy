@@ -4,9 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b1756922-fc03-4251-a805-9420c997b1c8" name="Changes" comment="V001&#10;Add Group Manager">
+    <list default="true" id="b1756922-fc03-4251-a805-9420c997b1c8" name="Changes" comment="V001&#10;Add Group Manager complte with group edit">
+      <change afterPath="$PROJECT_DIR$/sendswhatsapp.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tst.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/views/campaign_view1.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/views/campaign_view.py" beforeDir="false" afterPath="$PROJECT_DIR$/views/campaign_view.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/views/contacts_view.py" beforeDir="false" afterPath="$PROJECT_DIR$/views/contacts_view.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/views/group_manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/views/group_manager.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/views/messages_view.py" beforeDir="false" afterPath="$PROJECT_DIR$/views/messages_view.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/views/reports_view.py" beforeDir="false" afterPath="$PROJECT_DIR$/views/reports_view.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -48,6 +56,8 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Python.app.executor": "Run",
+    "Python.campaign_view.executor": "Run",
     "Python.db_init.executor": "Run",
     "Python.init_db_schema (1).executor": "Run",
     "Python.init_db_schema.executor": "Run",
@@ -55,11 +65,17 @@
     "Python.migrate_contacts_table.executor": "Run",
     "Python.testdb (1).executor": "Run",
     "Python.testdb.executor": "Run",
+    "Python.tst (1).executor": "Run",
+    "Python.tst.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "master"
+    "git-widget-placeholder": "master",
+    "last_opened_file_path": "C:/ClubBotPy/views"
   }
 }]]></component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\ClubBotPy\views" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\ClubBotPy" />
       <recent name="C:\ClubBotPy\db\" />
@@ -67,8 +83,8 @@
       <recent name="C:\ClubBotPy\db\test" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.main">
-    <configuration name="init_db_schema (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Python.tst (1)">
+    <configuration name="app" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="ClubBotPy" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -77,11 +93,11 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/flask" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/init_db_schema.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/flask/app.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -90,7 +106,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="init_db_schema" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="campaign_view" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="ClubBotPy" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -99,11 +115,11 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/db" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/views" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="C:\ClubBotPy\init_db_schema.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/views/campaign_view.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -126,28 +142,6 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="migrate_contacts_table" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="ClubBotPy" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/migrate_contacts_table.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -200,7 +194,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="testdb" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="tst (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="ClubBotPy" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -213,7 +207,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="C:\ClubBotPy\db\test\testdb.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tst.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -222,7 +216,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="testdb" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="tst" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="ClubBotPy" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -231,11 +225,11 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/db/test" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/views" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="C:\ClubBotPy\db\testdb.py" />
+      <option name="SCRIPT_NAME" value="C:\ClubBotPy\tst.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -246,10 +240,10 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.testdb (1)" />
-        <item itemvalue="Python.init_db_schema (1)" />
-        <item itemvalue="Python.init_db_schema" />
-        <item itemvalue="Python.testdb (1)" />
+        <item itemvalue="Python.tst (1)" />
+        <item itemvalue="Python.tst" />
+        <item itemvalue="Python.campaign_view" />
+        <item itemvalue="Python.app" />
         <item itemvalue="Python.testdb (1)" />
       </list>
     </recent_temporary>
@@ -294,13 +288,36 @@
       <option name="project" value="LOCAL" />
       <updated>1748122991963</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="V001&#10;Add Group Manager complte with group edit">
+      <option name="closed" value="true" />
+      <created>1748126509893</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1748126509893</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="First" />
     <MESSAGE value="V001&#10;Add conatcn profile" />
     <MESSAGE value="V001&#10;Add Group Manager" />
-    <option name="LAST_COMMIT_MESSAGE" value="V001&#10;Add Group Manager" />
+    <MESSAGE value="V001&#10;Add Group Manager complte with group edit" />
+    <option name="LAST_COMMIT_MESSAGE" value="V001&#10;Add Group Manager complte with group edit" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/views/flask/app.py</url>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/tst.py</url>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

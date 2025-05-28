@@ -42,7 +42,7 @@ class GroupManagerDialog(QDialog):
 
         self.rating_filter = QComboBox()
         self.rating_filter.addItem("All Ratings")
-        self.rating_filter.addItems([str(i) for i in range(1, 6)])
+        self.rating_filter.addItems([str(i) for i in range(1, 9)])
         self.rating_filter.currentIndexChanged.connect(self.load_contacts)
 
         top_layout = QHBoxLayout()
