@@ -25,7 +25,9 @@ class CampaignsTab(QWidget):
         self.refresh_all()
 
     def db_connection(self):
-        return sqlite3.connect(os.path.join(os.path.dirname(__file__), "../db/clubbot.db"))
+        conn = sqlite3.connect(os.path.join(os.path.dirname(__file__), "../db/clubbot.db"), timeout=10)
+        conn.execute("PRAGMA journal_mode=WAL")  # Enable write-ahead logging
+        return conn
 
     def setup_ui(self):
         layout = QVBoxLayout()
@@ -43,6 +45,8 @@ class CampaignsTab(QWidget):
         refresh_btn = QPushButton("🔄 Refresh")
         refresh_btn.clicked.connect(self.refresh_all)
         contact_filter_layout.addWidget(refresh_btn)
+
+
 
         layout.addLayout(contact_filter_layout)
 
@@ -105,6 +109,9 @@ class CampaignsTab(QWidget):
         bottom_row.addWidget(self.send_btn)
         layout.addLayout(bottom_row)
         self.setLayout(layout)
+        self.monthly_btn = QPushButton("📆 Start Monthly Campaign")
+        self.monthly_btn.clicked.connect(self.start_monthly_campaign)
+        bottom_row.addWidget(self.monthly_btn)
 
     def refresh_all(self):
         self.load_contacts()
@@ -220,6 +227,20 @@ class CampaignsTab(QWidget):
         finally:
             self.message_type_filter.blockSignals(False)
 
+    def log_delivery_report(self, number, status):
+        try:
+            conn = self.db_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO delivery_report (whatsapp, status, logged_at)
+                VALUES (?, ?, datetime('now'))
+            """, (number, status))
+            conn.commit()
+            conn.close()
+            self.console_output.append(f"📋 Report logged for {number} [{status}]")
+        except Exception as e:
+            self.console_output.append(f"⚠️ Failed to log report for {number}: {str(e)}")
+
     def open_whatsapp_browser(self):
         try:
             script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../sendswhatsapp.py'))
@@ -241,30 +262,53 @@ class CampaignsTab(QWidget):
                 QMessageBox.warning(self, "Warning", "Please select contacts and messages first.")
                 return
 
+            # Fetch messages
             conn = self.db_connection()
             cursor = conn.cursor()
             qmarks = ",".join("?" * len(selected_message_ids))
-            cursor.execute(f"SELECT content FROM messages WHERE id IN ({qmarks})", selected_message_ids)
-            messages = [row[0] for row in cursor.fetchall()]
+            cursor.execute(f"SELECT id, content FROM messages WHERE id IN ({qmarks})", selected_message_ids)
+            id_to_message = {row[0]: row[1] for row in cursor.fetchall()}
+
+            # Build message list
+            numbers, names, messages, log_items = [], [], [], []
+            for i, contact in enumerate(self.selected_contacts):
+                contact_id = contact[0]
+                number = self.selected_numbers[i]
+                name = contact[1].split()[0] if contact[1] else "Friend"
+
+                cursor.execute("SELECT message_id FROM contact_message_log WHERE contact_id = ?", (contact_id,))
+                sent_ids = {row[0] for row in cursor.fetchall()}
+                available_ids = [mid for mid in selected_message_ids if mid not in sent_ids]
+                if not available_ids:
+                    available_ids = selected_message_ids
+
+                chosen_id = available_ids[0]
+                chosen_msg = id_to_message[chosen_id]
+                personalized = chosen_msg.replace("{Name}", name)
+
+                numbers.append(number)
+                names.append(name)
+                messages.append(personalized)
+                log_items.append((contact_id, number, chosen_id))
+
+                self.console_output.append(f"➡️ Prepared for {number}: {personalized[:60]}...")
+
             conn.close()
 
-            if not messages:
-                QMessageBox.warning(self, "Warning", "No messages found.")
-                return
-
-            mode = "Same" if self.send_mode.currentIndex() == 0 else "Random"
-
-            names = [c[1].split()[0] if c[1] else "Friend" for c in self.selected_contacts]
+            # Save all to campaign_data.json
             temp_data = {
-                "numbers": self.selected_numbers,
+                "numbers": numbers,
                 "names": names,
                 "messages": messages,
-                "mode": mode
+                "mode": "Same",
+                "min_delay": int(self.min_delay_input.text() or 1),
+                "max_delay": int(self.max_delay_input.text() or 3)
             }
             temp_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../campaign_data.json'))
             with open(temp_path, "w", encoding="utf-8") as f:
                 json.dump(temp_data, f, ensure_ascii=False, indent=2)
 
+            # Launch WhatsApp sender
             def run_sender():
                 try:
                     script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../sendswhatsapp.py'))
@@ -276,12 +320,69 @@ class CampaignsTab(QWidget):
                         encoding='utf-8',
                         errors='replace'
                     )
+
+                    index = 0
                     for line in process.stdout:
-                        self.console_output.append(line.strip())
+                        line = line.strip()
+                        self.console_output.append(line)
+
+                        if "✅ Sent to" in line:
+                            if index < len(log_items):
+                                contact_id, number, message_id = log_items[index]
+                                self.log_message_sent(contact_id, message_id)
+                                self.log_delivery_report(number, "Sent")
+                                index += 1
+                        elif "❌" in line and index < len(log_items):
+                            _, number, _ = log_items[index]
+                            self.log_delivery_report(number, "Failed")
+                            index += 1
+
+                    self.console_output.append("🎉 Campaign completed.")
                 except Exception as e:
-                    self.console_output.append(f"❌ Error: {str(e)}")
+                    self.console_output.append(f"❌ Error in sending thread: {str(e)}")
 
             threading.Thread(target=run_sender, daemon=True).start()
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Could not send messages: {str(e)}")
+
+    def log_message_sent(self, contact_id, message_id):
+        try:
+            conn = self.db_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT OR IGNORE INTO contact_message_log (contact_id, message_id, sent_at)
+                VALUES (?, ?, datetime('now'))
+            """, (contact_id, message_id))
+            conn.commit()
+            conn.close()
+            self.console_output.append(f"ℹ️ Logged message ID {message_id} for contact ID {contact_id}")
+        except Exception as e:
+            self.console_output.append(f"⚠️ Failed to log message for contact ID {contact_id}: {str(e)}")
+
+    def start_monthly_campaign(self):
+        try:
+            # Select "1st Monthly Message" type
+            index = self.message_type_filter.findText("1st Monthly Message")
+            if index != -1:
+                self.message_type_filter.setCurrentIndex(index)
+                self.populate_message_list()
+                self.select_all_checkbox.setChecked(True)
+
+                # Optionally clear contact filter to include all
+                self.contact_filter.setCurrentIndex(0)
+                self.filter_contacts()
+
+                confirm = QMessageBox.question(
+                    self,
+                    "Confirm Monthly Campaign",
+                    "This will send unique 'Start of Month' messages to all selected contacts.\n\nProceed?",
+                    QMessageBox.Yes | QMessageBox.No
+                )
+
+                if confirm == QMessageBox.Yes:
+                    self.send_whatsapp_messages()
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Monthly campaign setup failed: {str(e)}")
+
+

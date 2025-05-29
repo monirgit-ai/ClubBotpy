@@ -15,16 +15,17 @@ class ClubBotApp(QMainWindow):
         super().__init__()
         self.setWindowTitle("ClubBot - WhatsApp Campaign Manager")
         self.setGeometry(200, 100, 1000, 600)
-        self.setWindowIcon(QIcon("assets/icon.png"))
+        self.setWindowIcon(QIcon("icon.png"))
 
         init_db()  # Initialize database
         self.initUI()
 
     def initUI(self):
         tabs = QTabWidget()
+        tabs.addTab(CampaignsTab(), "Campaign")
         tabs.addTab(ContactsTab(), "Contacts")
         tabs.addTab(MessagesTab(), "Messages")
-        tabs.addTab(CampaignsTab(), "Campaign")
+
         tabs.addTab(ReportsTab(), "Reports")
         self.setCentralWidget(tabs)
 

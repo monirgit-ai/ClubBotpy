@@ -1,19 +1,18 @@
 import sqlite3
-import os
 
-def list_tables():
-    db_path = os.path.join(os.path.dirname(__file__), 'db', 'clubbot.db')
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
+conn = sqlite3.connect("db/clubbot.db")
+cursor = conn.cursor()
 
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-    tables = cursor.fetchall()
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS delivery_report (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    whatsapp TEXT NOT NULL,
+    status TEXT NOT NULL,
+    logged_at TEXT DEFAULT CURRENT_TIMESTAMP
+)
+""")
 
-    print("📋 Tables in database:")
-    for t in tables:
-        print("-", t[0])
+conn.commit()
+conn.close()
 
-    conn.close()
-
-if __name__ == "__main__":
-    list_tables()
+print("✅ delivery_report table created successfully.")
