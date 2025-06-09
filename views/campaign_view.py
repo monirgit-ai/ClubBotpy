@@ -274,7 +274,7 @@ class CampaignsTab(QWidget):
             for i, contact in enumerate(self.selected_contacts):
                 contact_id = contact[0]
                 number = self.selected_numbers[i]
-                name = contact[1].split()[0] if contact[1] else "Friend"
+                name = contact[1].split()[0] if contact[1] else ""
 
                 cursor.execute("SELECT message_id FROM contact_message_log WHERE contact_id = ?", (contact_id,))
                 sent_ids = {row[0] for row in cursor.fetchall()}
@@ -282,7 +282,12 @@ class CampaignsTab(QWidget):
                 if not available_ids:
                     available_ids = selected_message_ids
 
-                chosen_id = available_ids[0]
+                if self.send_mode.currentText() == "Random Rotation":
+                    import random
+                    chosen_id = random.choice(available_ids)
+                else:
+                    chosen_id = available_ids[0]
+
                 chosen_msg = id_to_message[chosen_id]
                 personalized = chosen_msg.replace("{Name}", name)
 
